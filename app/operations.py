@@ -1,10 +1,10 @@
 """
 Author: Leo Tso
-Class: Operations
+Class: IS601
 Date: 2025-10-12
 """
 
-class Operations:
+class Operation:
     @staticmethod
     def addition(a: float, b: float) -> float:
         return a + b

@@ -1,6 +1,6 @@
 """
 Author: Leo Tso
-Class: CalculatorCalculations
+Class: IS601
 Date: 2025-10-12
 """
 
