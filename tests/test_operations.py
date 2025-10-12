@@ -14,6 +14,7 @@ from app.operations import (
     Modulus,
     IntegerDivision,
     Percentage,
+    AbsoluteDifference,
     OperationFactory,
 )
 
@@ -242,6 +243,22 @@ class TestPercentage(BaseOperationTest):
             "message": "Division by zero is not allowed",
         },
     }
+class TestAbsoluteDifference(BaseOperationTest):
+    """Test AbsoluteDifference operation."""
+    from app.operations import AbsoluteDifference  # local import to avoid circulars in some setups
+    operation_class = AbsoluteDifference
+
+    valid_test_cases = {
+        "pos_minus_pos":   {"a": "10",  "b": "3",   "expected": "7"},
+        "pos_minus_bigger":{"a": "3",   "b": "10",  "expected": "7"},
+        "neg_minus_pos":   {"a": "-5",  "b": "2",   "expected": "7"},
+        "pos_minus_neg":   {"a": "5",   "b": "-2",  "expected": "7"},
+        "both_negative":   {"a": "-8",  "b": "-3",  "expected": "5"},
+        "zeros":           {"a": "0",   "b": "0",   "expected": "0"},
+        "decimals":        {"a": "5.5", "b": "3.1", "expected": "2.4"},
+    }
+    invalid_test_cases = {}  # no special invalid cases
+
 
 class TestOperationFactory:
     """Test OperationFactory functionality."""
@@ -257,7 +274,8 @@ class TestOperationFactory:
             'root': Root,
             'modulus': Modulus,
             'intdiv': IntegerDivision,
-            'percentage': Percentage
+            'percentage': Percentage,
+            'absdiff': AbsoluteDifference
         }
 
         for op_name, op_class in operation_map.items():

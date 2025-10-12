@@ -38,3 +38,11 @@ def test_format_result_edge_case():
 def test_percentage_in_model_dispatch():
     c = Calculation(operation="Percentage", operand1=Decimal("25"), operand2=Decimal("200"))
     assert c.result == Decimal("12.5")
+
+def test_absolute_difference_calculation():
+    calc = Calculation(operation="AbsoluteDifference", operand1=Decimal("10"), operand2=Decimal("3"))
+    assert calc.result == Decimal("7")
+
+def test_absolute_difference_symmetric():
+    calc = Calculation(operation="AbsoluteDifference", operand1=Decimal("3"), operand2=Decimal("10"))
+    assert calc.result == Decimal("7")
