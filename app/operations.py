@@ -67,7 +67,6 @@ class Root(Operation):
     
 
 class Modulus(Operation):
-    """Modulus (remainder) operation implementation."""
 
     def validate_operands(self, a: Decimal, b: Decimal) -> None:
         super().validate_operands(a, b)
@@ -81,7 +80,6 @@ class Modulus(Operation):
         return a - q * b
 
 class IntegerDivision(Operation):
-    """Integer (truncating) division: discard any fractional part (toward zero)."""
 
     def validate_operands(self, a: Decimal, b: Decimal) -> None:
         super().validate_operands(a, b)
@@ -94,6 +92,7 @@ class IntegerDivision(Operation):
         return (a / b).to_integral_value(rounding=ROUND_DOWN)
     
 class Percentage(Operation):
+    
     def validate_operands(self, a: Decimal, b: Decimal) -> None:
         if b == 0:
             raise ValidationError("Division by zero is not allowed")
@@ -101,6 +100,12 @@ class Percentage(Operation):
     def execute(self, a: Decimal, b: Decimal) -> Decimal:
         self.validate_operands(a, b)
         return (a / b) * Decimal(100)
+
+class AbsoluteDifference(Operation):
+
+    def execute(self, a: Decimal, b: Decimal) -> Decimal:
+        self.validate_operands(a, b)
+        return (a - b).copy_abs()
 
 
 class OperationFactory:
@@ -115,6 +120,7 @@ class OperationFactory:
         'modulus': Modulus,
         'intdiv': IntegerDivision,
         'percentage': Percentage,
+        'absdiff': AbsoluteDifference,
     }
 
     @classmethod
