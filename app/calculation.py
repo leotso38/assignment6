@@ -4,66 +4,114 @@ Class: IS601
 Date: 2025-10-12
 """
 
-from abc import ABC, abstractmethod
-from app.operations import Operations
+from dataclasses import dataclass, field
+import datetime
+from decimal import Decimal, InvalidOperation
+import logging
+from typing import Any, Dict
+from app.exceptions import OperationError
 
-class Calculation(ABC):
-    def __init__(self, a: float, b: float) -> None:
-        self.a: float = a
-        self.b: float = b
+@dataclass
+class Calculation:
+    operation: str
+    operand1: Decimal
+    operand2: Decimal
+    result: Decimal = field(init=False)
+    timestamp: datetime.datetime = field(default_factory=datetime.datetime.now)
 
-    @abstractmethod
-    def execute(self) -> float:
-        pass  # pragma: no cover
+    def __post_init__(self):
+        self.result = self.calculate()
+
+    def calculate(self) -> Decimal:
+        operations = {
+            "Addition": lambda x, y: x + y,
+            "Subtraction": lambda x, y: x - y,
+            "Multiplication": lambda x, y: x * y,
+            "Division": lambda x, y: x / y if y != 0 else self._raise_div_zero(),
+            "Power": lambda x, y: Decimal(pow(float(x), float(y))) if y >= 0 else self._raise_neg_power(),
+            "Root": lambda x, y: (
+                Decimal(pow(float(x), 1 / float(y)))
+                if x >= 0 and y != 0
+                else self._raise_invalid_root(x, y)
+            ),
+        }
+        op = operations.get(self.operation)
+        if not op:
+            raise OperationError(f"Unknown operation: {self.operation}")
+        try:
+            return op(self.operand1, self.operand2)
+        except (InvalidOperation, ValueError, ArithmeticError) as e:
+            raise OperationError(f"Calculation failed: {str(e)}")
+
+    @staticmethod
+    def _raise_div_zero():
+        raise OperationError("Division by zero is not allowed")
+
+    @staticmethod
+    def _raise_neg_power():
+        raise OperationError("Negative exponents are not supported")
+
+    @staticmethod
+    def _raise_invalid_root(x: Decimal, y: Decimal):
+        if y == 0:
+            raise OperationError("Zero root is undefined")
+        if x < 0:
+            raise OperationError("Cannot calculate root of negative number")
+        raise OperationError("Invalid root operation")
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            'operation': self.operation,
+            'operand1': str(self.operand1),
+            'operand2': str(self.operand2),
+            'result': str(self.result),
+            'timestamp': self.timestamp.isoformat()
+        }
+
+    @staticmethod
+    def from_dict(data: Dict[str, Any]) -> 'Calculation':
+        try:
+            calc = Calculation(
+                operation=data['operation'],
+                operand1=Decimal(data['operand1']),
+                operand2=Decimal(data['operand2'])
+            )
+            calc.timestamp = datetime.datetime.fromisoformat(data['timestamp'])
+            saved_result = Decimal(data['result'])
+            if calc.result != saved_result:
+                logging.warning(
+                    f"Loaded calculation result {saved_result} differs from computed result {calc.result}"
+                )
+            return calc
+        except (KeyError, InvalidOperation, ValueError) as e:
+            raise OperationError(f"Invalid calculation data: {str(e)}")
 
     def __str__(self) -> str:
-        result = self.execute()
-        Operations_name = self.__class__.__name__.replace('Calculation', '')
-        return f"{self.__class__.__name__}: {self.a} {Operations_name} {self.b} = {result}"
+        return f"{self.operation}({self.operand1}, {self.operand2}) = {self.result}"
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(a={self.a}, b={self.b})"
+        return (
+            f"Calculation(operation='{self.operation}', "
+            f"operand1={self.operand1}, "
+            f"operand2={self.operand2}, "
+            f"result={self.result}, "
+            f"timestamp='{self.timestamp.isoformat()}')"
+        )
 
-class CalculationFactory:
-    _calculations = {}
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Calculation):
+            return NotImplemented
+        return (
+            self.operation == other.operation and
+            self.operand1 == other.operand1 and
+            self.operand2 == other.operand2 and
+            self.result == other.result
+        )
 
-    @classmethod
-    def register_calculation(cls, calculation_type: str):
-        def decorator(subclass):
-            calculation_type_lower = calculation_type.lower()
-            if calculation_type_lower in cls._calculations:
-                raise ValueError(f"Calculation type '{calculation_type}' is already registered.")
-            cls._calculations[calculation_type_lower] = subclass
-            return subclass
-        return decorator
-
-    @classmethod
-    def create_calculation(cls, calculation_type: str, a: float, b: float) -> Calculation:
-        calculation_type_lower = calculation_type.lower()
-        calculation_class = cls._calculations.get(calculation_type_lower)
-        if not calculation_class:
-            available_types = ', '.join(cls._calculations.keys())
-            raise ValueError(f"Unsupported calculation type: '{calculation_type}'. Available types: {available_types}")
-        return calculation_class(a, b)
-
-@CalculationFactory.register_calculation('add')
-class AddCalculation(Calculation):
-    def execute(self) -> float:
-        return Operations.addition(self.a, self.b)
-
-@CalculationFactory.register_calculation('subtract')
-class SubtractCalculation(Calculation):
-    def execute(self) -> float:
-        return Operations.subtraction(self.a, self.b)
-
-@CalculationFactory.register_calculation('multiply')
-class MultiplyCalculation(Calculation):
-    def execute(self) -> float:
-        return Operations.multiplication(self.a, self.b)
-
-@CalculationFactory.register_calculation('divide')
-class DivideCalculation(Calculation):
-    def execute(self) -> float:
-        if self.b == 0:
-            raise ZeroDivisionError("Cannot divide by zero.")
-        return Operations.division(self.a, self.b)
+    def format_result(self, precision: int = 10) -> str:
+        try:
+            return str(self.result.normalize().quantize(
+                Decimal('0.' + '0' * precision)
+            ).normalize())
+        except InvalidOperation:
+            return str(self.result)
