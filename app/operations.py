@@ -5,7 +5,7 @@ Date: 2025-10-12
 """
 
 from abc import ABC, abstractmethod
-from decimal import Decimal
+from decimal import Decimal, ROUND_FLOOR 
 from typing import Dict
 from app.exceptions import ValidationError
 
@@ -65,17 +65,21 @@ class Root(Operation):
         self.validate_operands(a, b)
         return Decimal(pow(float(a), 1 / float(b)))
     
+
 class Modulus(Operation):
- 
+    """Modulus (remainder) operation implementation."""
+
     def validate_operands(self, a: Decimal, b: Decimal) -> None:
         super().validate_operands(a, b)
         if b == 0:
-            # Keep message consistent with your other checks
             raise ValidationError("Division by zero is not allowed")
 
     def execute(self, a: Decimal, b: Decimal) -> Decimal:
         self.validate_operands(a, b)
-        return a % b
+        # Force Python-style modulo: a - floor(a/b) * b  (result has sign of b)
+        q = (a / b).to_integral_value(rounding=ROUND_FLOOR)
+        return a - q * b
+
 
 class OperationFactory:
     """Factory class for creating operation instances."""
