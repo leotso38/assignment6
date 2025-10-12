@@ -6,7 +6,7 @@ Date: 2025-10-12
 
 from dataclasses import dataclass, field
 import datetime
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_DOWN
 import logging
 from typing import Any, Dict
 from app.exceptions import OperationError
@@ -35,6 +35,8 @@ class Calculation:
                 else self._raise_invalid_root(x, y)
             ),
             "Modulus": lambda x, y: x % y if y != 0 else self._raise_div_zero(),
+              "IntegerDivision": lambda x, y: (x / y).to_integral_value(rounding=ROUND_DOWN)
+        if y != 0 else self._raise_div_zero(),
         }
         op = operations.get(self.operation)
         if not op:

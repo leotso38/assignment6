@@ -12,6 +12,7 @@ from app.operations import (
     Power,
     Root,
     Modulus,
+    IntegerDivision,
     OperationFactory,
 )
 
@@ -190,6 +191,25 @@ class TestModulus(BaseOperationTest):
         "neg_divisor":   {"a": "10",  "b": "-3", "expected": "-2"},  # 10 % -3 == -2
         "both_negative": {"a": "-10", "b": "-3", "expected": "-1"},  # -10 % -3 == -1
         "zero_dividend": {"a": "0",   "b": "5",  "expected": "0"},
+    }
+    invalid_test_cases = {
+        "zero_divisor": {
+            "a": "5", "b": "0",
+            "error": ValidationError,
+            "message": "Division by zero is not allowed",
+        }
+    }
+
+class TestIntegerDivision(BaseOperationTest):
+    operation_class = IntegerDivision
+    valid_test_cases = {
+        "pos_pos_trunc":       {"a": "7",   "b": "3",   "expected": "2"},
+        "pos_pos_exact":       {"a": "9",   "b": "3",   "expected": "3"},
+        "neg_dividend_trunc":  {"a": "-7",  "b": "3",   "expected": "-2"},  # toward zero
+        "neg_divisor_trunc":   {"a": "7",   "b": "-3",  "expected": "-2"},
+        "both_negative_trunc": {"a": "-7",  "b": "-3",  "expected": "2"},
+        "zero_dividend":       {"a": "0",   "b": "5",   "expected": "0"},
+        "decimal_inputs":      {"a": "7.9", "b": "2",   "expected": "3"},
     }
     invalid_test_cases = {
         "zero_divisor": {

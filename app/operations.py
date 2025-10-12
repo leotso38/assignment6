@@ -5,7 +5,7 @@ Date: 2025-10-12
 """
 
 from abc import ABC, abstractmethod
-from decimal import Decimal, ROUND_FLOOR 
+from decimal import Decimal, ROUND_FLOOR, ROUND_DOWN  
 from typing import Dict
 from app.exceptions import ValidationError
 
@@ -80,7 +80,19 @@ class Modulus(Operation):
         q = (a / b).to_integral_value(rounding=ROUND_FLOOR)
         return a - q * b
 
+class IntegerDivision(Operation):
+    """Integer (truncating) division: discard any fractional part (toward zero)."""
 
+    def validate_operands(self, a: Decimal, b: Decimal) -> None:
+        super().validate_operands(a, b)
+        if b == 0:
+            raise ValidationError("Division by zero is not allowed")
+
+    def execute(self, a: Decimal, b: Decimal) -> Decimal:
+        self.validate_operands(a, b)
+        # Truncate toward zero (not floor). This matches “discard fractional part”.
+        return (a / b).to_integral_value(rounding=ROUND_DOWN)
+    
 class OperationFactory:
     """Factory class for creating operation instances."""
     _operations: Dict[str, type] = {
@@ -90,7 +102,8 @@ class OperationFactory:
         'divide': Division,
         'power': Power,
         'root': Root,
-        'modulus': Modulus
+        'modulus': Modulus,
+        'intdiv': IntegerDivision
     }
 
     @classmethod
