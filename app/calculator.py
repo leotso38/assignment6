@@ -99,8 +99,16 @@ class Calculator:
             self.undo_stack.append(CalculatorMemento(self.history.copy()))
             self.redo_stack.clear()
             self.history.append(calculation)
-            if len(self.history) > self.config.max_history_size:
-                self.history.pop(0)
+            # Enforce max history size: keep only the most recent N entries
+            try:
+                max_n = int(self.config.max_history_size)
+            except (TypeError, ValueError):
+                max_n = 0
+
+            if max_n > 0 and len(self.history) > max_n:
+                # Keep only the last max_n items (most recent)
+                self.history = self.history[-max_n:]
+
             self.notify_observers(calculation)
             return result
         except ValidationError as e:
