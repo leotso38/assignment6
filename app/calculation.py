@@ -34,6 +34,7 @@ class Calculation:
                 if x >= 0 and y != 0
                 else self._raise_invalid_root(x, y)
             ),
+            "Modulus": lambda x, y: x % y if y != 0 else self._raise_div_zero(),
         }
         op = operations.get(self.operation)
         if not op:
