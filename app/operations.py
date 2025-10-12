@@ -93,6 +93,17 @@ class IntegerDivision(Operation):
         # Truncate toward zero (not floor). This matches “discard fractional part”.
         return (a / b).to_integral_value(rounding=ROUND_DOWN)
     
+class Percentage(Operation):
+    """Percentage operation: (a / b) * 100."""
+    def validate_operands(self, a: Decimal, b: Decimal) -> None:
+        super().validate_operands(a, b)
+        if b == 0:
+            raise ValidationError("Division by zero is not allowed")
+
+    def execute(self, a: Decimal, b: Decimal) -> Decimal:
+        self.validate_operands(a, b)
+        return (a / b) * Decimal('100')
+
 class OperationFactory:
     """Factory class for creating operation instances."""
     _operations: Dict[str, type] = {
@@ -103,7 +114,8 @@ class OperationFactory:
         'power': Power,
         'root': Root,
         'modulus': Modulus,
-        'intdiv': IntegerDivision
+        'intdiv': IntegerDivision,
+        'percentage': Percentage,
     }
 
     @classmethod

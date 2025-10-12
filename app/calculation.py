@@ -37,6 +37,7 @@ class Calculation:
             "Modulus": lambda x, y: x % y if y != 0 else self._raise_div_zero(),
               "IntegerDivision": lambda x, y: (x / y).to_integral_value(rounding=ROUND_DOWN)
         if y != 0 else self._raise_div_zero(),
+            "Percentage": lambda x, y: (x / y) * Decimal('100') if y != 0 else self._raise_div_zero(),  
         }
         op = operations.get(self.operation)
         if not op:

@@ -35,3 +35,6 @@ def test_format_result_edge_case():
     s = c.format_result(precision=5)
     assert s == "3"   # normalize() removes trailing decimals
 
+def test_percentage_in_model_dispatch():
+    c = Calculation(operation="Percentage", operand1=Decimal("25"), operand2=Decimal("200"))
+    assert c.result == Decimal("12.5")

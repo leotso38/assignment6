@@ -13,6 +13,7 @@ from app.operations import (
     Root,
     Modulus,
     IntegerDivision,
+    Percentage,
     OperationFactory,
 )
 
@@ -219,6 +220,28 @@ class TestIntegerDivision(BaseOperationTest):
         }
     }
 
+class TestPercentage(BaseOperationTest):
+    """Test Percentage operation."""
+
+    operation_class = Percentage
+    valid_test_cases = {
+        "basic":           {"a": "25",    "b": "200",  "expected": "12.5"},
+        "whole_percent":   {"a": "1",     "b": "4",    "expected": "25"},
+        "zero_numerator":  {"a": "0",     "b": "7",    "expected": "0"},
+        "decimals":        {"a": "2.5",   "b": "5",    "expected": "50"},
+        "over_100":        {"a": "300",   "b": "200",  "expected": "150"},
+        "neg_num":         {"a": "-25",   "b": "200",  "expected": "-12.5"},
+        "neg_den":         {"a": "25",    "b": "-200", "expected": "-12.5"},
+        "both_neg":        {"a": "-25",   "b": "-200", "expected": "12.5"},
+    }
+    invalid_test_cases = {
+        "divide_by_zero": {
+            "a": "5",
+            "b": "0",
+            "error": ValidationError,
+            "message": "Division by zero is not allowed",
+        },
+    }
 
 class TestOperationFactory:
     """Test OperationFactory functionality."""
@@ -232,6 +255,9 @@ class TestOperationFactory:
             'divide': Division,
             'power': Power,
             'root': Root,
+            'modulus': Modulus,
+            'intdiv': IntegerDivision,
+            'percentage': Percentage
         }
 
         for op_name, op_class in operation_map.items():
