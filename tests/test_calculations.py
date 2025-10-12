@@ -6,7 +6,7 @@ Date: 2025-10-12
 
 import pytest
 from unittest.mock import patch
-from app.operation import Operation
+from app.operations import Operations
 from app.calculation import (
     CalculationFactory,
     AddCalculation,
@@ -16,7 +16,7 @@ from app.calculation import (
     Calculation
 )
 
-@patch.object(Operation, 'addition')
+@patch.object(Operations, 'addition')
 def test_add_calculation_execute_positive(mock_addition):
     a = 10.0
     b = 5.0
@@ -27,7 +27,7 @@ def test_add_calculation_execute_positive(mock_addition):
     mock_addition.assert_called_once_with(a, b)
     assert result == expected_result
 
-@patch.object(Operation, 'addition')
+@patch.object(Operations, 'addition')
 def test_add_calculation_execute_negative(mock_addition):
     a = 10.0
     b = 5.0
@@ -37,7 +37,7 @@ def test_add_calculation_execute_negative(mock_addition):
         add_calc.execute()
     assert str(exc_info.value) == "Addition error"
 
-@patch.object(Operation, 'subtraction')
+@patch.object(Operations, 'subtraction')
 def test_subtract_calculation_execute_positive(mock_subtraction):
     a = 10.0
     b = 5.0
@@ -48,7 +48,7 @@ def test_subtract_calculation_execute_positive(mock_subtraction):
     mock_subtraction.assert_called_once_with(a, b)
     assert result == expected_result
 
-@patch.object(Operation, 'subtraction')
+@patch.object(Operations, 'subtraction')
 def test_subtract_calculation_execute_negative(mock_subtraction):
     a = 10.0
     b = 5.0
@@ -58,7 +58,7 @@ def test_subtract_calculation_execute_negative(mock_subtraction):
         subtract_calc.execute()
     assert str(exc_info.value) == "Subtraction error"
 
-@patch.object(Operation, 'multiplication')
+@patch.object(Operations, 'multiplication')
 def test_multiply_calculation_execute_positive(mock_multiplication):
     a = 10.0
     b = 5.0
@@ -69,7 +69,7 @@ def test_multiply_calculation_execute_positive(mock_multiplication):
     mock_multiplication.assert_called_once_with(a, b)
     assert result == expected_result
 
-@patch.object(Operation, 'multiplication')
+@patch.object(Operations, 'multiplication')
 def test_multiply_calculation_execute_negative(mock_multiplication):
     a = 10.0
     b = 5.0
@@ -79,7 +79,7 @@ def test_multiply_calculation_execute_negative(mock_multiplication):
         multiply_calc.execute()
     assert str(exc_info.value) == "Multiplication error"
 
-@patch.object(Operation, 'division')
+@patch.object(Operations, 'division')
 def test_divide_calculation_execute_positive(mock_division):
     a = 10.0
     b = 5.0
@@ -90,7 +90,7 @@ def test_divide_calculation_execute_positive(mock_division):
     mock_division.assert_called_once_with(a, b)
     assert result == expected_result
 
-@patch.object(Operation, 'division')
+@patch.object(Operations, 'division')
 def test_divide_calculation_execute_negative(mock_division):
     a = 10.0
     b = 5.0
@@ -153,10 +153,10 @@ def test_factory_register_calculation_duplicate():
         @CalculationFactory.register_calculation('add')
         class AnotherAddCalculation(Calculation):
             def execute(self) -> float:
-                return Operation.addition(self.a, self.b)
+                return Operations.addition(self.a, self.b)
     assert "Calculation type 'add' is already registered." in str(exc_info.value)
 
-@patch.object(Operation, 'addition', return_value=15.0)
+@patch.object(Operations, 'addition', return_value=15.0)
 def test_calculation_str_representation_addition(mock_addition):
     a = 10.0
     b = 5.0
@@ -165,7 +165,7 @@ def test_calculation_str_representation_addition(mock_addition):
     expected_str = f"{add_calc.__class__.__name__}: {a} Add {b} = 15.0"
     assert calc_str == expected_str
 
-@patch.object(Operation, 'subtraction', return_value=5.0)
+@patch.object(Operations, 'subtraction', return_value=5.0)
 def test_calculation_str_representation_subtraction(mock_subtraction):
     a = 10.0
     b = 5.0
@@ -174,7 +174,7 @@ def test_calculation_str_representation_subtraction(mock_subtraction):
     expected_str = f"{subtract_calc.__class__.__name__}: {a} Subtract {b} = 5.0"
     assert calc_str == expected_str
 
-@patch.object(Operation, 'multiplication', return_value=50.0)
+@patch.object(Operations, 'multiplication', return_value=50.0)
 def test_calculation_str_representation_multiplication(mock_multiplication):
     a = 10.0
     b = 5.0
@@ -183,7 +183,7 @@ def test_calculation_str_representation_multiplication(mock_multiplication):
     expected_str = f"{multiply_calc.__class__.__name__}: {a} Multiply {b} = 50.0"
     assert calc_str == expected_str
 
-@patch.object(Operation, 'division', return_value=2.0)
+@patch.object(Operations, 'division', return_value=2.0)
 def test_calculation_str_representation_division(mock_division):
     a = 10.0
     b = 5.0
@@ -214,10 +214,10 @@ def test_calculation_repr_representation_division():
     ('multiply', 10.0, 5.0, 50.0),
     ('divide', 10.0, 5.0, 2.0),
 ])
-@patch.object(Operation, 'addition')
-@patch.object(Operation, 'subtraction')
-@patch.object(Operation, 'multiplication')
-@patch.object(Operation, 'division')
+@patch.object(Operations, 'addition')
+@patch.object(Operations, 'subtraction')
+@patch.object(Operations, 'multiplication')
+@patch.object(Operations, 'division')
 def test_calculation_execute_parameterized(
     mock_division, mock_multiplication, mock_subtraction, mock_addition,
     calc_type, a, b, expected_result
@@ -248,10 +248,10 @@ def test_calculation_execute_parameterized(
     ('multiply', 10.0, 5.0, "MultiplyCalculation: 10.0 Multiply 5.0 = 50.0"),
     ('divide', 10.0, 5.0, "DivideCalculation: 10.0 Divide 5.0 = 2.0"),
 ])
-@patch.object(Operation, 'addition', return_value=15.0)
-@patch.object(Operation, 'subtraction', return_value=5.0)
-@patch.object(Operation, 'multiplication', return_value=50.0)
-@patch.object(Operation, 'division', return_value=2.0)
+@patch.object(Operations, 'addition', return_value=15.0)
+@patch.object(Operations, 'subtraction', return_value=5.0)
+@patch.object(Operations, 'multiplication', return_value=50.0)
+@patch.object(Operations, 'division', return_value=2.0)
 def test_calculation_str_parameterized(
     mock_division, mock_multiplication, mock_subtraction, mock_addition,
     calc_type, a, b, expected_str

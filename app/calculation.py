@@ -5,7 +5,7 @@ Date: 2025-10-12
 """
 
 from abc import ABC, abstractmethod
-from app.operation import Operation
+from app.operations import Operations
 
 class Calculation(ABC):
     def __init__(self, a: float, b: float) -> None:
@@ -18,8 +18,8 @@ class Calculation(ABC):
 
     def __str__(self) -> str:
         result = self.execute()
-        operation_name = self.__class__.__name__.replace('Calculation', '')
-        return f"{self.__class__.__name__}: {self.a} {operation_name} {self.b} = {result}"
+        Operations_name = self.__class__.__name__.replace('Calculation', '')
+        return f"{self.__class__.__name__}: {self.a} {Operations_name} {self.b} = {result}"
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(a={self.a}, b={self.b})"
@@ -49,21 +49,21 @@ class CalculationFactory:
 @CalculationFactory.register_calculation('add')
 class AddCalculation(Calculation):
     def execute(self) -> float:
-        return Operation.addition(self.a, self.b)
+        return Operations.addition(self.a, self.b)
 
 @CalculationFactory.register_calculation('subtract')
 class SubtractCalculation(Calculation):
     def execute(self) -> float:
-        return Operation.subtraction(self.a, self.b)
+        return Operations.subtraction(self.a, self.b)
 
 @CalculationFactory.register_calculation('multiply')
 class MultiplyCalculation(Calculation):
     def execute(self) -> float:
-        return Operation.multiplication(self.a, self.b)
+        return Operations.multiplication(self.a, self.b)
 
 @CalculationFactory.register_calculation('divide')
 class DivideCalculation(Calculation):
     def execute(self) -> float:
         if self.b == 0:
             raise ZeroDivisionError("Cannot divide by zero.")
-        return Operation.division(self.a, self.b)
+        return Operations.division(self.a, self.b)

@@ -4,7 +4,7 @@ Class: IS601
 Date: 2025-10-12
 """
 
-class Operation:
+class Operations:
     @staticmethod
     def addition(a: float, b: float) -> float:
         return a + b
