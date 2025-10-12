@@ -178,11 +178,30 @@ class Calculator:
             })
         return pd.DataFrame(history_data)
 
+    @staticmethod
+    def _format_decimal_plain(value: Decimal) -> str:
+        """Plain (non-exponent) string for a Decimal, trimming trailing zeros."""
+        s = format(value, "f")
+        if "." in s:
+            s = s.rstrip("0").rstrip(".")
+        if s == "-0":
+            s = "0"
+        return s
+
     def show_history(self) -> List[str]:
-        return [
-            f"{calc.operation}({calc.operand1}, {calc.operand2}) = {calc.result}"
-            for calc in self.history
-        ]
+        entries: List[str] = []
+        for calc in self.history:
+            is_percentage = str(calc.operation).lower() == "percentage"
+
+            a_str = self._format_decimal_plain(calc.operand1) if isinstance(calc.operand1, Decimal) else str(calc.operand1)
+            b_str = self._format_decimal_plain(calc.operand2) if isinstance(calc.operand2, Decimal) else str(calc.operand2)
+            res_str = self._format_decimal_plain(calc.result)  if isinstance(calc.result,  Decimal) else str(calc.result)
+
+            if is_percentage:
+                res_str = f"{res_str}%"
+
+            entries.append(f"{calc.operation}({a_str}, {b_str}) = {res_str}")
+        return entries
 
     def clear_history(self) -> None:
         self.history.clear()

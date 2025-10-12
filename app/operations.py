@@ -94,15 +94,14 @@ class IntegerDivision(Operation):
         return (a / b).to_integral_value(rounding=ROUND_DOWN)
     
 class Percentage(Operation):
-    """Percentage operation: (a / b) * 100."""
     def validate_operands(self, a: Decimal, b: Decimal) -> None:
-        super().validate_operands(a, b)
         if b == 0:
             raise ValidationError("Division by zero is not allowed")
 
     def execute(self, a: Decimal, b: Decimal) -> Decimal:
         self.validate_operands(a, b)
-        return (a / b) * Decimal('100')
+        return (a / b) * Decimal(100)
+
 
 class OperationFactory:
     """Factory class for creating operation instances."""

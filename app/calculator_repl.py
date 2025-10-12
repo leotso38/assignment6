@@ -89,23 +89,36 @@ def calculator_repl():
                         print(f"Error loading history: {e}")
                     continue
 
-                if command in ['add', 'subtract', 'multiply', 'divide', 'power', 'root', 'modulus', 'intdiv', 'percentage']:
+                # ---- Operations ----
+                if command in ('add', 'subtract', 'multiply', 'divide', 'power', 'root', 'modulus', 'intdiv', 'percentage'):
                     try:
                         print("\nEnter numbers (or 'cancel' to abort):")
                         a = input("First number: ")
                         if a.lower() == 'cancel':
                             print("Operation cancelled")
                             continue
+
                         b = input("Second number: ")
                         if b.lower() == 'cancel':
                             print("Operation cancelled")
                             continue
+
                         operation = OperationFactory.create_operation(command)
                         calc.set_operation(operation)
+
                         result = calc.perform_operation(a, b)
+
+                        # Pretty-print the result (no scientific notation)
                         if isinstance(result, Decimal):
-                            result = result.normalize()
-                        print(f"\nResult: {result}")
+                            res_str = Calculator._format_decimal_plain(result)
+                        else:
+                            res_str = str(result)
+
+                        # Append % for Percentage
+                        if str(operation).lower() == 'percentage':
+                            res_str = f"{res_str}%"
+
+                        print(f"\nResult: {res_str}")
                     except (ValidationError, OperationError) as e:
                         print(f"Error: {e}")
                     except Exception as e:

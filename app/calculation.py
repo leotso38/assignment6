@@ -91,7 +91,10 @@ class Calculation:
             raise OperationError(f"Invalid calculation data: {str(e)}")
 
     def __str__(self) -> str:
-        return f"{self.operation}({self.operand1}, {self.operand2}) = {self.result}"
+        res_str = str(self.result)
+        if self.operation == 'Percentage':
+            res_str = f"{res_str}%"
+        return f"{self.operation}({self.operand1}, {self.operand2}) = {res_str}"
 
     def __repr__(self) -> str:
         return (
