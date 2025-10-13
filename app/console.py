@@ -1,75 +1,70 @@
 """
-Author: Leo Tso
-Class: IS601
-Date: 2025-10-12
+Console wrapper and tiny color helpers.
+
+- `calculator_repl()` here **calls** the core REPL and then **raises SystemExit(0)**
+  so tests that import from `app.console` see a real CLI-style exit.
+- Colors are optional: set CALCULATOR_COLOR=1 (or 'true'/'yes') to enable if Colorama
+  is installed; otherwise output stays plain (tests compare raw strings).
 """
 
+from __future__ import annotations
 import os
-import sys
-from typing import Literal
 
-try:
-    from colorama import init as colorama_init, Fore, Style
-except Exception:  # pragma: no cover
-    # Fallback if colorama isn't installed; return plain text
-    Fore = Style = type("Dummy", (), {"RESET_ALL": "", "RED": "", "GREEN": "", "YELLOW": "", "CYAN": "", "BRIGHT": ""})()
-    def colorama_init(*_args, **_kwargs):  # type: ignore
-        pass
+# --- Optional Colorama support controlled by env flag ------------------------
+_USE_COLOR = os.getenv("CALCULATOR_COLOR", "0").strip().lower() in {"1", "true", "yes"}
+_HAS_COLOR = False
+try:  # pragma: no cover - availability depends on environment
+    from colorama import init as _cinit, Fore, Style  # type: ignore
+    _cinit(autoreset=True)
+    _HAS_COLOR = True
+except Exception:  # pragma: no cover - defensive fallback
+    class _NoStyle:
+        RESET_ALL = ""
+        BRIGHT = ""
+    class _NoFore:
+        CYAN = ""
+        GREEN = ""
+        YELLOW = ""
+        RED = ""
+        MAGENTA = ""
+    Style = _NoStyle()      # type: ignore
+    Fore = _NoFore()        # type: ignore
+    _HAS_COLOR = False
 
-# Policy:
-# - Default AUTO: enable colors only when stdout is a TTY and not running under pytest.
-# - FORCE_ON: force enable (even in non-tty).
-# - OFF: disable (always plain text).
-ColorMode = Literal["AUTO", "FORCE_ON", "OFF"]
 
-def _detect_mode() -> ColorMode:
-    env = os.getenv("CALCULATOR_COLOR", "AUTO").upper()
-    if env in {"FORCE_ON", "ON", "TRUE", "1", "YES"}:
-        return "FORCE_ON"
-    if env in {"OFF", "FALSE", "0", "NO"}:
-        return "OFF"
-    return "AUTO"
+def fmt(msg: str, kind: str | None = None) -> str:
+    """Return `msg` colorized if enabled, otherwise unchanged."""
+    if not (_USE_COLOR and _HAS_COLOR):
+        return msg
+    color = {
+        "heading":  Fore.MAGENTA,
+        "info":     Fore.CYAN,
+        "ok":       Fore.GREEN,
+        "warn":     Fore.YELLOW,
+        "error":    Fore.RED,
+        "prompt":   Fore.CYAN,
+    }.get(kind or "", "")
+    return f"{Style.BRIGHT}{color}{msg}{Style.RESET_ALL}" if color else msg
 
-_MODE: ColorMode = _detect_mode()
 
-# Initialize colorama once (safe on Windows; harmless elsewhere)
-colorama_init(autoreset=True)
+def prompt_text(text: str) -> str:
+    """Build a prompt label (no I/O), colorized if enabled."""
+    return fmt(text, "prompt")
 
-def colors_enabled() -> bool:
-    if _MODE == "FORCE_ON":
-        return True
-    if _MODE == "OFF":
-        return False
-    # AUTO:
-    if os.getenv("PYTEST_CURRENT_TEST"):  # pytest sets this
-        return False
-    return sys.stdout.isatty()
 
-def _apply(s: str, prefix: str) -> str:
-    if not colors_enabled():
-        return s
-    return f"{prefix}{s}{Style.RESET_ALL}"
+def color_status() -> dict:
+    """Runtime flags to verify color state without printing control codes."""
+    return {"use_color": _USE_COLOR, "has_color": _HAS_COLOR}
 
-def c_info(s: str) -> str:
-    """Informational text (cyan)."""
-    return _apply(s, f"{Fore.CYAN}")
 
-def c_success(s: str) -> str:
-    """Success text (green)."""
-    return _apply(s, f"{Fore.GREEN}{Style.BRIGHT}")
+def calculator_repl() -> None:
+    """
+    Console-facing entrypoint used by tests importing from `app.console`.
+    Calls the core REPL (which RETURNS) and then raises SystemExit(0).
+    """
+    from app.calculator_repl import calculator_repl as _core_repl
+    _core_repl()
+    raise SystemExit(0)
 
-def c_warn(s: str) -> str:
-    """Warnings (yellow)."""
-    return _apply(s, f"{Fore.YELLOW}{Style.BRIGHT}")
 
-def c_error(s: str) -> str:
-    """Errors (red)."""
-    return _apply(s, f"{Fore.RED}{Style.BRIGHT}")
-
-def c_heading(s: str) -> str:
-    """Headings (bright)."""
-    return _apply(s, f"{Style.BRIGHT}")
-
-def c_prompt(s: str) -> str:
-    """Prompts (cyan, bright)."""
-    return _apply(s, f"{Fore.CYAN}{Style.BRIGHT}")
+__all__ = ["fmt", "prompt_text", "color_status", "calculator_repl"]
