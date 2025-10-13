@@ -1,8 +1,11 @@
 """
-Text REPL for the calculator with optional colored output.
+Text REPL for the calculator with optional colorized output.
 
-Colors are enabled only if CALCULATOR_COLOR=1 (or 'true'/'yes') and Colorama is installed.
-Strings remain identical when color is disabled, preserving test expectations.
+- Uses app.console.fmt() and prompt_text() to colorize when enabled
+  (CALCULATOR_COLOR=1 and colorama installed).
+- This function RETURNS on exit/EOF; it does not raise SystemExit.
+  The console wrapper (app.console.calculator_repl) turns that into SystemExit
+  for CLI/tests that expect it.
 """
 
 from __future__ import annotations
@@ -16,15 +19,11 @@ from app.operations import OperationFactory
 from app.console import fmt, prompt_text
 
 
-def _print(s: str, kind: str | None = None) -> None:
-    print(fmt(s, kind))
+def _print(msg: str, kind: str | None = None) -> None:
+    print(fmt(msg, kind))
 
 
-def calculator_repl():
-    """
-    Core REPL. Prints messages and RETURNS when finished.
-    (Does NOT raise SystemExit — the wrapper in app.console handles that case.)
-    """
+def calculator_repl() -> None:
     try:
         calc = Calculator()
         calc.add_observer(LoggingObserver())
@@ -55,7 +54,7 @@ def calculator_repl():
                     except Exception as e:
                         _print(f"Warning: Could not save history: {e}", "warn")
                     _print("Goodbye!", "heading")
-                    return  # <--- return instead of sys.exit
+                    return  # <-- do not raise; wrapper handles SystemExit
 
                 if command == 'history':
                     history = calc.show_history()
@@ -110,7 +109,6 @@ def calculator_repl():
                         if a.lower() == 'cancel':
                             _print("Operation cancelled", "warn")
                             continue
-
                         b = input(prompt_text("Second number: "))
                         if b.lower() == 'cancel':
                             _print("Operation cancelled", "warn")
@@ -121,7 +119,7 @@ def calculator_repl():
 
                         result = calc.perform_operation(a, b)
 
-                        # Format result for display
+                        # Display formatting
                         result_disp = result.normalize() if isinstance(result, Decimal) else result
                         if str(operation) == 'Percentage':
                             result_disp = f"{result_disp}%"
@@ -137,16 +135,15 @@ def calculator_repl():
 
             except KeyboardInterrupt:
                 _print("Operation cancelled", "warn")
-                # loop continues; user can type exit next
                 continue
             except EOFError:
                 _print("Input terminated. Exiting...", "warn")
-                return  # end session gracefully without SystemExit
+                return
             except Exception as e:
                 _print(f"Error: {e}", "error")
                 continue
 
-    except Exception as e:  # pragma: no cover - last-chance guard for CLI
+    except Exception as e:
         _print(f"Fatal error: {e}", "error")
         logging.error(f"Fatal error in calculator REPL: {e}")
         raise

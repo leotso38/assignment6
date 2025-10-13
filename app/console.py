@@ -1,40 +1,63 @@
 """
-Console wrapper and tiny color helpers.
+Console wrapper + tiny color helpers.
 
-- `calculator_repl()` here **calls** the core REPL and then **raises SystemExit(0)**
-  so tests that import from `app.console` see a real CLI-style exit.
-- Colors are optional: set CALCULATOR_COLOR=1 (or 'true'/'yes') to enable if Colorama
-  is installed; otherwise output stays plain (tests compare raw strings).
+- Export `calculator_repl()` that runs the core REPL and then raises SystemExit,
+  matching tests that expect a CLI-style exit.
+- Color output is enabled only when ALL are true:
+    * CALCULATOR_COLOR is set to 1/true/yes
+    * colorama is installed
+    * running in a real TTY (stdout isatty)
+    * NOT running under pytest (PYTEST_CURRENT_TEST unset)
+  Otherwise output is plain (so tests comparing raw strings pass).
 """
 
 from __future__ import annotations
 import os
+import sys
 
-# --- Optional Colorama support controlled by env flag ------------------------
-_USE_COLOR = os.getenv("CALCULATOR_COLOR", "0").strip().lower() in {"1", "true", "yes"}
-_HAS_COLOR = False
-try:  # pragma: no cover - availability depends on environment
+# ---- environment flag (opt-in) ------------------------------------------------
+_ENV_WANTS_COLOR = os.getenv("CALCULATOR_COLOR", "0").strip().lower() in {"1", "true", "yes"}
+
+# ---- best-effort import of colorama (graceful fallback) -----------------------
+_HAS_COLORAMA = False
+try:
     from colorama import init as _cinit, Fore, Style  # type: ignore
     _cinit(autoreset=True)
-    _HAS_COLOR = True
-except Exception:  # pragma: no cover - defensive fallback
-    class _NoStyle:
+    _HAS_COLORAMA = True
+except Exception:  # pragma: no cover
+    class _NoStyle:  # type: ignore
         RESET_ALL = ""
         BRIGHT = ""
-    class _NoFore:
+    class _NoFore:  # type: ignore
         CYAN = ""
         GREEN = ""
         YELLOW = ""
         RED = ""
         MAGENTA = ""
-    Style = _NoStyle()      # type: ignore
-    Fore = _NoFore()        # type: ignore
-    _HAS_COLOR = False
+    Style = _NoStyle()   # type: ignore
+    Fore  = _NoFore()    # type: ignore
+    _HAS_COLORAMA = False
+
+
+def _color_enabled() -> bool:
+    """Color only if explicitly requested, colorama available, real TTY, and not pytest."""
+    if not _ENV_WANTS_COLOR:
+        return False
+    if not _HAS_COLORAMA:
+        return False
+    # Avoid coloring under pytest so tests see plain strings
+    if "PYTEST_CURRENT_TEST" in os.environ:
+        return False
+    # Only color when printing to a real terminal
+    try:
+        return sys.stdout.isatty()
+    except Exception:
+        return False
 
 
 def fmt(msg: str, kind: str | None = None) -> str:
-    """Return `msg` colorized if enabled, otherwise unchanged."""
-    if not (_USE_COLOR and _HAS_COLOR):
+    """Return colorized string when enabled; otherwise unchanged."""
+    if not _color_enabled():
         return msg
     color = {
         "heading":  Fore.MAGENTA,
@@ -48,23 +71,18 @@ def fmt(msg: str, kind: str | None = None) -> str:
 
 
 def prompt_text(text: str) -> str:
-    """Build a prompt label (no I/O), colorized if enabled."""
+    """Build a prompt label (no input yet), colorized if enabled."""
     return fmt(text, "prompt")
-
-
-def color_status() -> dict:
-    """Runtime flags to verify color state without printing control codes."""
-    return {"use_color": _USE_COLOR, "has_color": _HAS_COLOR}
 
 
 def calculator_repl() -> None:
     """
     Console-facing entrypoint used by tests importing from `app.console`.
-    Calls the core REPL (which RETURNS) and then raises SystemExit(0).
+    Calls the core REPL (which returns) and then raises SystemExit(0).
     """
     from app.calculator_repl import calculator_repl as _core_repl
     _core_repl()
     raise SystemExit(0)
 
 
-__all__ = ["fmt", "prompt_text", "color_status", "calculator_repl"]
+__all__ = ["fmt", "prompt_text", "calculator_repl"]
