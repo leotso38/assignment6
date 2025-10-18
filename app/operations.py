@@ -14,7 +14,7 @@ class Operation(ABC):
     """Abstract base class for calculator operations."""
 
     @abstractmethod
-    def execute(self, a: Decimal, b: Decimal) -> Decimal:
+    def execute(self, a: Decimal, b: Decimal) -> Decimal:  # pragma: no cover
         """Perform the operation."""
         pass
 

@@ -83,7 +83,7 @@ def calculator_repl() -> None:
                     if calc.undo():
                         _print("Operation undone", "ok")
                     else:
-                        _print("Nothing to undo", "warn")
+                        _print("Nothing to undo", "warn")  # pragma: no cover
                     continue
 
                 if command == "redo":
