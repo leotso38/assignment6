@@ -13,187 +13,241 @@ You’ll use it to easily install Git, Python, Docker, etc.
 
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-Verify Homebrew:
+```
 
-bash
-Copy code
+**Verify Homebrew:**
+
+```bash
 brew --version
+```
+
 If you see a version number, you're good to go.
 
-🧩 2. Install and Configure Git
-Install Git
-MacOS (using Homebrew)
+---
 
-bash
-Copy code
+# 🧩 2. Install and Configure Git
+
+## Install Git
+
+- **MacOS (using Homebrew)**
+
+```bash
 brew install git
-Windows
+```
 
-Download and install Git for Windows.
+- **Windows**
+
+Download and install [Git for Windows](https://git-scm.com/download/win).  
 Accept the default options during installation.
 
-Verify Git:
+**Verify Git:**
 
-bash
-Copy code
+```bash
 git --version
-Configure Git Globals
+```
+
+---
+
+## Configure Git Globals
+
 Set your name and email so Git tracks your commits properly:
 
-bash
-Copy code
+```bash
 git config --global user.name "Your Name"
 git config --global user.email "your_email@example.com"
+```
+
 Confirm the settings:
 
-bash
-Copy code
+```bash
 git config --list
-Generate SSH Keys and Connect to GitHub
-Only do this once per machine.
+```
 
-Generate a new SSH key:
+---
 
-bash
-Copy code
+## Generate SSH Keys and Connect to GitHub
+
+> Only do this once per machine.
+
+1. Generate a new SSH key:
+
+```bash
 ssh-keygen -t ed25519 -C "your_email@example.com"
+```
+
 (Press Enter at all prompts.)
 
-Start the SSH agent:
+2. Start the SSH agent:
 
-bash
-Copy code
+```bash
 eval "$(ssh-agent -s)"
-Add the SSH private key to the agent:
+```
 
-bash
-Copy code
+3. Add the SSH private key to the agent:
+
+```bash
 ssh-add ~/.ssh/id_ed25519
-Copy your SSH public key:
+```
 
-Mac/Linux:
+4. Copy your SSH public key:
 
-bash
-Copy code
+- **Mac/Linux:**
+
+```bash
 cat ~/.ssh/id_ed25519.pub | pbcopy
-Windows (Git Bash):
+```
 
-bash
-Copy code
+- **Windows (Git Bash):**
+
+```bash
 cat ~/.ssh/id_ed25519.pub | clip
-Add the key to your GitHub account:
+```
 
-Go to GitHub SSH Settings
+5. Add the key to your GitHub account:
+   - Go to [GitHub SSH Settings](https://github.com/settings/keys)
+   - Click **New SSH Key**, paste the key, save.
 
-Click New SSH Key, paste the key, save.
+6. Test the connection:
 
-Test the connection:
-
-bash
-Copy code
+```bash
 ssh -T git@github.com
+```
+
 You should see a success message.
 
-🧩 3. Clone the Repository
+---
+
+# 🧩 3. Clone the Repository
+
 Now you can safely clone the course project:
 
-bash
-Copy code
+```bash
 git clone <repository-url>
 cd <repository-directory>
-🛠️ 4. Install Python 3.10+
-Install Python
-MacOS (Homebrew)
+```
 
-bash
-Copy code
+---
+
+# 🛠️ 4. Install Python 3.10+
+
+## Install Python
+
+- **MacOS (Homebrew)**
+
+```bash
 brew install python
-Windows
+```
 
-Download and install Python for Windows.
-✅ Make sure you check the box Add Python to PATH during setup.
+- **Windows**
 
-Verify Python:
+Download and install [Python for Windows](https://www.python.org/downloads/).  
+✅ Make sure you **check the box** `Add Python to PATH` during setup.
 
-bash
-Copy code
+**Verify Python:**
+
+```bash
 python3 --version
+```
 or
-
-bash
-Copy code
+```bash
 python --version
-Create and Activate a Virtual Environment
+```
+
+---
+
+## Create and Activate a Virtual Environment
+
 (Optional but recommended)
 
-bash
-Copy code
+```bash
 python3 -m venv venv
 source venv/bin/activate   # Mac/Linux
 venv\Scripts\activate.bat  # Windows
-Install Required Packages
-bash
-Copy code
+```
+
+### Install Required Packages
+
+```bash
 pip install -r requirements.txt
-🐳 5. (Optional) Docker Setup
-Skip if Docker isn't used in this module.
+```
 
-Install Docker
-Install Docker Desktop for Mac
+---
 
-Install Docker Desktop for Windows
+# 🐳 5. (Optional) Docker Setup
 
-Build Docker Image
-bash
-Copy code
+> Skip if Docker isn't used in this module.
+
+## Install Docker
+
+- [Install Docker Desktop for Mac](https://www.docker.com/products/docker-desktop/)
+- [Install Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/)
+
+## Build Docker Image
+
+```bash
 docker build -t <image-name> .
-Run Docker Container
-bash
-Copy code
-docker run -it --rm <image-name>
-🚀 6. Running the Project
-Without Docker:
+```
 
-bash
-Copy code
+## Run Docker Container
+
+```bash
+docker run -it --rm <image-name>
+```
+
+---
+
+# 🚀 6. Running the Project
+
+- **Without Docker**:
+
+```bash
 python main.py
+```
+
 (or update this if the main script is different.)
 
-With Docker:
+# 🎨 6.1 Enabling Color Output in Calculator REPL
 
-bash
-Copy code
-docker run -it --rm <image-name>
-🎨 6.1 Enabling Color Output in Calculator REPL
-You can enable colorized output in the calculator’s command-line interface using the colorama package.
+- **With Docker**:
 
-Follow these steps to install and configure it in your virtual environment (.venv):
-
-bash
-Copy code
-(.venv) user@Mazz-2023:~/projects/assignment6$ pip install colorama
+```bash
+pip install colorama
 Collecting colorama
   Using cached colorama-0.4.6-py2.py3-none-any.whl.metadata (17 kB)
 Using cached colorama-0.4.6-py2.py3-none-any.whl (25 kB)
 Installing collected packages: colorama
 Successfully installed colorama-0.4.6
+```
 🧭 Enable Color Mode
 Add the following line to your ~/.bashrc file so color mode is automatically enabled each time you open a terminal:
-
-bash
-Copy code
+```bash
 echo 'export CALCULATOR_COLOR=1' >> ~/.bashrc
+```
 Reload your terminal or source the file:
-
-bash
-Copy code
+```bash
 source ~/.bashrc
-▶️ Run the Calculator
-Start the calculator from your project root:
+```
+---
 
-bash
-Copy code
-(.venv) user@Mazz-2023:~/projects/assignment6$ python3 main.py
+# 📝 7. Submission Instructions
+
+After finishing your work:
+
+```bash
+git add .
+git commit -m "Complete Module X"
+git push origin main
+```
+
+Then submit the GitHub repository link as instructed.
+
+---
+
+# ▶️ Run the Calculator
+
+Start the calculator from your project root:
+```bash
+(.venv) user@User:~/projects/assignment6$ python3 main.py
 Calculator started. Type 'help' for commands.
 Enter command: add
 
@@ -230,56 +284,40 @@ Available commands:
 Enter command: exit
 History saved successfully.
 Goodbye!
-💡 Notes
-Color output only appears in a real terminal (TTY) — not in IDE “Debug Consoles.”
 
-To force color output even when not using a TTY, set:
+```
 
-bash
-Copy code
-export CALCULATOR_COLOR_FORCE=1
-Ensure colorama is installed in the same .venv you’re running the calculator from.
+# 🔥 Useful Commands Cheat Sheet
 
-📝 7. Submission Instructions
-After finishing your work:
+| Action                         | Command                                          |
+| ------------------------------- | ------------------------------------------------ |
+| Install Homebrew (Mac)          | `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"` |
+| Install Git                     | `brew install git` or Git for Windows installer |
+| Configure Git Global Username  | `git config --global user.name "Your Name"`      |
+| Configure Git Global Email     | `git config --global user.email "you@example.com"` |
+| Clone Repository                | `git clone <repo-url>`                          |
+| Create Virtual Environment     | `python3 -m venv venv`                           |
+| Activate Virtual Environment   | `source venv/bin/activate` / `venv\Scripts\activate.bat` |
+| Install Python Packages        | `pip install -r requirements.txt`               |
+| Build Docker Image              | `docker build -t <image-name> .`                |
+| Run Docker Container            | `docker run -it --rm <image-name>`               |
+| Push Code to GitHub             | `git add . && git commit -m "message" && git push` |
 
-bash
-Copy code
-git add .
-git commit -m "Complete Module X"
-git push origin main
-Then submit the GitHub repository link as instructed.
+---
 
-🔥 Useful Commands Cheat Sheet
-Action	Command
-Install Homebrew (Mac)	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-Install Git	brew install git or Git for Windows installer
-Configure Git Global Username	git config --global user.name "Your Name"
-Configure Git Global Email	git config --global user.email "you@example.com"
-Clone Repository	git clone <repo-url>
-Create Virtual Environment	python3 -m venv venv
-Activate Virtual Environment	source venv/bin/activate / venv\Scripts\activate.bat
-Install Python Packages	pip install -r requirements.txt
-Build Docker Image	docker build -t <image-name> .
-Run Docker Container	docker run -it --rm <image-name>
-Push Code to GitHub	git add . && git commit -m "message" && git push
+# 📋 Notes
 
-📋 Notes
-Install Homebrew first on Mac.
+- Install **Homebrew** first on Mac.
+- Install and configure **Git** and **SSH** before cloning.
+- Use **Python 3.10+** and **virtual environments** for Python projects.
+- **Docker** is optional depending on the project.
 
-Install and configure Git and SSH before cloning.
+---
 
-Use Python 3.10+ and virtual environments for Python projects.
+# 📎 Quick Links
 
-Docker is optional depending on the project.
-
-📎 Quick Links
-Homebrew
-
-Git Downloads
-
-Python Downloads
-
-Docker Desktop
-
-GitHub SSH Setup Guide
+- [Homebrew](https://brew.sh/)
+- [Git Downloads](https://git-scm.com/downloads)
+- [Python Downloads](https://www.python.org/downloads/)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [GitHub SSH Setup Guide](https://docs.github.com/en/authentication/connecting-to-github-with-ssh)
