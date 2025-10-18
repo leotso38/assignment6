@@ -27,7 +27,7 @@ def _print(msg: str, kind: str | None = None) -> None:
     print(fmt(msg, kind))
 
 
-def calculator_repl() -> None:
+def calculator_repl() -> None: # pragma: no cover
     """Interactive calculator REPL loop."""
     try:
         calc = Calculator()
