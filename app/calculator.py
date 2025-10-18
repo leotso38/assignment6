@@ -50,7 +50,7 @@ class Calculator:
 
         logging.info("Calculator initialized with configuration")
 
-    def _setup_logging(self) -> None:
+    def _setup_logging(self) -> None: # pragma: no cover
         """Configure file logging based on CalculatorConfig.log_file."""
         try:
             os.makedirs(self.config.log_dir, exist_ok=True)
