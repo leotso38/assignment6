@@ -1,3 +1,9 @@
+# Author: Leo Tso
+# Date: 2025-10-18
+# Class: IS601
+# File: tests/test_validators.py
+# Notes: Operation strategy tests and factory coverage (valid/invalid paths).
+
 import pytest
 from decimal import Decimal
 from typing import Any, Dict, Type
@@ -185,6 +191,7 @@ class TestRoot(BaseOperationTest):
         },
     }
 
+
 class TestModulus(BaseOperationTest):
     operation_class = Modulus
     valid_test_cases = {
@@ -201,6 +208,7 @@ class TestModulus(BaseOperationTest):
             "message": "Division by zero is not allowed",
         }
     }
+
 
 class TestIntegerDivision(BaseOperationTest):
     operation_class = IntegerDivision
@@ -220,6 +228,7 @@ class TestIntegerDivision(BaseOperationTest):
             "message": "Division by zero is not allowed",
         }
     }
+
 
 class TestPercentage(BaseOperationTest):
     """Test Percentage operation."""
@@ -243,6 +252,8 @@ class TestPercentage(BaseOperationTest):
             "message": "Division by zero is not allowed",
         },
     }
+
+
 class TestAbsoluteDifference(BaseOperationTest):
     """Test AbsoluteDifference operation."""
     from app.operations import AbsoluteDifference  # local import to avoid circulars in some setups

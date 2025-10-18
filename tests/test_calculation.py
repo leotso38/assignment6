@@ -2,7 +2,7 @@
 # Date: 2025-10-18
 # Class: IS601
 # File: tests/test_calculation.py
-# Purpose: Consolidated unit tests for Calculation ops, errors, logging, and dunder methods.
+# Notes: Unit tests for Calculation ops, error paths, logging, formatting, and dunder methods.
 
 import logging
 import builtins

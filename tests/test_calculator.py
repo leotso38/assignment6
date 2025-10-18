@@ -1,4 +1,8 @@
-# tests/test_calculator.py
+# Author: Leo Tso
+# Date: 2025-10-18
+# Class: IS601
+# File: tests/test_calculator.py
+# Notes: End-to-end tests for Calculator orchestration, REPL wrapper, observers, history I/O, and undo/redo.
 
 import datetime
 from pathlib import Path
@@ -21,6 +25,7 @@ from app.operations import OperationFactory, Addition
 # ---------- Shared helpers / fixtures ----------
 
 class _SpyObserver(HistoryObserver):
+    """Minimal observer to capture update() notifications."""
     def __init__(self):
         self.seen = []
     def update(self, calculation):
@@ -29,11 +34,11 @@ class _SpyObserver(HistoryObserver):
 
 @pytest.fixture
 def calc_tmp():
-    """Calculator with a fully temporary config (logs/history all under a temp dir)."""
+    """Calculator with temp-scoped files (logs/history stay under a temp dir)."""
     with TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)
         cfg = CalculatorConfig(base_dir=temp_path)
-        # Patch all path-like properties so nothing escapes the temp dir
+        # force all paths into temp area
         with patch.object(CalculatorConfig, 'log_dir', new_callable=PropertyMock) as p1, \
              patch.object(CalculatorConfig, 'log_file', new_callable=PropertyMock) as p2, \
              patch.object(CalculatorConfig, 'history_dir', new_callable=PropertyMock) as p3, \
@@ -43,12 +48,12 @@ def calc_tmp():
             p3.return_value = temp_path / "history"
             p4.return_value = temp_path / "history/calculator_history.csv"
             c = Calculator(config=cfg)
-            c.clear_history()  # start clean in every test
+            c.clear_history()
             yield c
 
 
 def _mk_calc(tmp_path: Path, **overrides) -> Calculator:
-    """(Used by extra coverage tests) Create a calc rooted at tmp_path and blank history."""
+    """Helper: new Calculator rooted at tmp_path with clean history."""
     cfg = CalculatorConfig(
         base_dir=tmp_path,
         max_history_size=overrides.get("max_history_size", 10),
@@ -58,7 +63,7 @@ def _mk_calc(tmp_path: Path, **overrides) -> Calculator:
     return c
 
 
-# ---------- Tests derived from tests/test_calculator.py ----------
+# ---------- Core object lifecycle ----------
 
 def test_calculator_initialization(calc_tmp):
     assert calc_tmp.history == []
@@ -152,13 +157,14 @@ def test_clear_history(calc_tmp):
     assert calc_tmp.redo_stack == []
 
 
+# ---------- REPL behavior (via console wrapper) ----------
+
 @patch.object(builtins, 'input', side_effect=['exit'])
 @patch.object(builtins, 'print')
 def test_calculator_repl_exit(mock_print, _mock_input):
     with patch('app.calculator.Calculator.save_history') as mock_save_history:
         calculator_repl()
         mock_save_history.assert_called_once()
-        # match plain text messages
         mock_print.assert_any_call("History saved successfully.")
         mock_print.assert_any_call("Goodbye!")
 
@@ -177,7 +183,7 @@ def test_calculator_repl_addition(mock_print, _mock_input):
     mock_print.assert_any_call("\nResult: 5")
 
 
-# ---------- Tests derived from tests/test_calculator_extra_coverage_for_calculator.py ----------
+# ---------- Extra coverage: observers, DF, undo/redo, I/O errors ----------
 
 def test_no_operation_set_raises_operationerror(tmp_path):
     c = _mk_calc(tmp_path)
@@ -206,7 +212,7 @@ def test_get_history_dataframe_and_show_history_percentage_format(tmp_path):
 
     df = c.get_history_dataframe()
     assert list(df.columns) == ["operation", "operand1", "operand2", "result", "timestamp"]
-    assert len(df) == 1  # exactly the one we just added
+    assert len(df) == 1
 
     hist_lines = c.show_history()
     assert "Addition(2, 3) = 5" in hist_lines[0]
@@ -232,7 +238,6 @@ def test_undo_then_redo_roundtrip(tmp_path):
 
 def test_save_history_writes_even_when_empty(tmp_path):
     c = _mk_calc(tmp_path)
-    # history is empty due to _mk_calc; saving should produce only headers
     c.save_history()
     assert c.config.history_file.exists()
     df = pd.read_csv(c.config.history_file)
@@ -249,7 +254,6 @@ def test_save_history_wraps_errors(tmp_path, monkeypatch):
         raise OSError("disk full")
     monkeypatch.setattr(pd.DataFrame, "to_csv", boom)
 
-    from app.exceptions import OperationError
     with pytest.raises(OperationError, match="Failed to save history:"):
         c.save_history()
 
@@ -273,7 +277,7 @@ def test_load_history_parses_valid_rows(tmp_path):
     c.perform_operation("2", "8")
     c.save_history()
 
-    c2 = _mk_calc(tmp_path)  # starts empty, but we’re going to load
+    c2 = _mk_calc(tmp_path)
     c2.load_history()
     assert c2.history
     assert "Addition(2, 8) = 10" in [str(h) for h in c2.history]
