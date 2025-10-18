@@ -1,18 +1,14 @@
-# Author: Leo Tso
-# Date: 2025-10-18
-# Class: IS601
-# File: tests/test_console_isatty_exception.py
-# Notes: Cover app.console._color_enabled() exception branch when sys.stdout.isatty() raises.
+# tests/test_console_isatty_exception.py
 
 import sys
 import importlib
 import types
 
 def _reload_console_with_bad_isatty(monkeypatch):
-    # force env flag ON so we actually reach isatty()
     monkeypatch.setenv("CALCULATOR_COLOR", "1")
+    # ensure we *are not* “under pytest” to reach isatty() branch
+    monkeypatch.delenv("PYTEST_CURRENT_TEST", raising=False)
 
-    # provide a minimal colorama so earlier checks pass
     fake = types.SimpleNamespace(
         init=lambda autoreset=True: None,
         Fore=types.SimpleNamespace(CYAN="C", GREEN="G", YELLOW="Y", RED="R", MAGENTA="M"),
@@ -20,7 +16,6 @@ def _reload_console_with_bad_isatty(monkeypatch):
     )
     monkeypatch.setitem(sys.modules, "colorama", fake)
 
-    # make sys.stdout.isatty() raise -> _color_enabled should catch and return False
     class _StdOut:
         def isatty(self):
             raise RuntimeError("tty boom")
