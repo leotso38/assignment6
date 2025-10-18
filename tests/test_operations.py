@@ -1,3 +1,9 @@
+# Author: Leo Tso
+# Date: 2025-10-18
+# Class: IS601
+# File: tests/test_validators.py
+# Notes: Operation strategy tests and factory coverage (valid/invalid paths).
+
 import pytest
 from decimal import Decimal
 from typing import Any, Dict, Type
@@ -11,6 +17,10 @@ from app.operations import (
     Division,
     Power,
     Root,
+    Modulus,
+    IntegerDivision,
+    Percentage,
+    AbsoluteDifference,
     OperationFactory,
 )
 
@@ -182,6 +192,85 @@ class TestRoot(BaseOperationTest):
     }
 
 
+class TestModulus(BaseOperationTest):
+    operation_class = Modulus
+    valid_test_cases = {
+        "pos_pos":       {"a": "10",  "b": "3",  "expected": "1"},
+        "neg_dividend":  {"a": "-10", "b": "3",  "expected": "2"},   # -10 % 3 == 2
+        "neg_divisor":   {"a": "10",  "b": "-3", "expected": "-2"},  # 10 % -3 == -2
+        "both_negative": {"a": "-10", "b": "-3", "expected": "-1"},  # -10 % -3 == -1
+        "zero_dividend": {"a": "0",   "b": "5",  "expected": "0"},
+    }
+    invalid_test_cases = {
+        "zero_divisor": {
+            "a": "5", "b": "0",
+            "error": ValidationError,
+            "message": "Division by zero is not allowed",
+        }
+    }
+
+
+class TestIntegerDivision(BaseOperationTest):
+    operation_class = IntegerDivision
+    valid_test_cases = {
+        "pos_pos_trunc":       {"a": "7",   "b": "3",   "expected": "2"},
+        "pos_pos_exact":       {"a": "9",   "b": "3",   "expected": "3"},
+        "neg_dividend_trunc":  {"a": "-7",  "b": "3",   "expected": "-2"},  # toward zero
+        "neg_divisor_trunc":   {"a": "7",   "b": "-3",  "expected": "-2"},
+        "both_negative_trunc": {"a": "-7",  "b": "-3",  "expected": "2"},
+        "zero_dividend":       {"a": "0",   "b": "5",   "expected": "0"},
+        "decimal_inputs":      {"a": "7.9", "b": "2",   "expected": "3"},
+    }
+    invalid_test_cases = {
+        "zero_divisor": {
+            "a": "5", "b": "0",
+            "error": ValidationError,
+            "message": "Division by zero is not allowed",
+        }
+    }
+
+
+class TestPercentage(BaseOperationTest):
+    """Test Percentage operation."""
+
+    operation_class = Percentage
+    valid_test_cases = {
+        "basic":           {"a": "25",    "b": "200",  "expected": "12.5"},
+        "whole_percent":   {"a": "1",     "b": "4",    "expected": "25"},
+        "zero_numerator":  {"a": "0",     "b": "7",    "expected": "0"},
+        "decimals":        {"a": "2.5",   "b": "5",    "expected": "50"},
+        "over_100":        {"a": "300",   "b": "200",  "expected": "150"},
+        "neg_num":         {"a": "-25",   "b": "200",  "expected": "-12.5"},
+        "neg_den":         {"a": "25",    "b": "-200", "expected": "-12.5"},
+        "both_neg":        {"a": "-25",   "b": "-200", "expected": "12.5"},
+    }
+    invalid_test_cases = {
+        "divide_by_zero": {
+            "a": "5",
+            "b": "0",
+            "error": ValidationError,
+            "message": "Division by zero is not allowed",
+        },
+    }
+
+
+class TestAbsoluteDifference(BaseOperationTest):
+    """Test AbsoluteDifference operation."""
+    from app.operations import AbsoluteDifference  # local import to avoid circulars in some setups
+    operation_class = AbsoluteDifference
+
+    valid_test_cases = {
+        "pos_minus_pos":   {"a": "10",  "b": "3",   "expected": "7"},
+        "pos_minus_bigger":{"a": "3",   "b": "10",  "expected": "7"},
+        "neg_minus_pos":   {"a": "-5",  "b": "2",   "expected": "7"},
+        "pos_minus_neg":   {"a": "5",   "b": "-2",  "expected": "7"},
+        "both_negative":   {"a": "-8",  "b": "-3",  "expected": "5"},
+        "zeros":           {"a": "0",   "b": "0",   "expected": "0"},
+        "decimals":        {"a": "5.5", "b": "3.1", "expected": "2.4"},
+    }
+    invalid_test_cases = {}  # no special invalid cases
+
+
 class TestOperationFactory:
     """Test OperationFactory functionality."""
 
@@ -194,6 +283,10 @@ class TestOperationFactory:
             'divide': Division,
             'power': Power,
             'root': Root,
+            'modulus': Modulus,
+            'intdiv': IntegerDivision,
+            'percentage': Percentage,
+            'absdiff': AbsoluteDifference
         }
 
         for op_name, op_class in operation_map.items():
