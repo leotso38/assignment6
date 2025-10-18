@@ -1,2 +1,3 @@
 operation,operand1,operand2,result,timestamp
-Percentage,25,1E+2,25.00,2025-10-18T09:35:48.906869
+Percentage,25,100,25.00,2025-10-18T09:42:15.994289
+Addition,2,3,5,2025-10-18T09:42:16.001215
