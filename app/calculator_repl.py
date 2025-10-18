@@ -1,11 +1,14 @@
+# Author: Leo Tso
+# Date: 2025-10-18
+# Class: IS601
+# File: app/repl.py
+# Notes: Text-based REPL for calculator operations with optional color output and full command handling.
+
 """
 Text REPL for the calculator with optional colorized output.
 
-- Uses app.console.fmt() and prompt_text() to colorize when enabled
-  (CALCULATOR_COLOR=1 and colorama installed).
-- This function RETURNS on exit/EOF; it does not raise SystemExit.
-  The console wrapper (app.console.calculator_repl) turns that into SystemExit
-  for CLI/tests that expect it.
+- Uses app.console.fmt() and prompt_text() for styling when CALCULATOR_COLOR=1 and colorama is installed.
+- Returns gracefully on exit/EOF; outer wrapper handles SystemExit for CLI/tests.
 """
 
 from __future__ import annotations
@@ -20,10 +23,12 @@ from app.console import fmt, prompt_text
 
 
 def _print(msg: str, kind: str | None = None) -> None:
+    """Helper to print formatted message via console formatter."""
     print(fmt(msg, kind))
 
 
 def calculator_repl() -> None:
+    """Interactive calculator REPL loop."""
     try:
         calc = Calculator()
         calc.add_observer(LoggingObserver())
@@ -35,7 +40,8 @@ def calculator_repl() -> None:
             try:
                 command = input(prompt_text("Enter command: ")).lower().strip()
 
-                if command == 'help':
+                # ---- Help menu ----
+                if command == "help":
                     _print("\nAvailable commands:", "heading")
                     _print("  add, subtract, multiply, divide, power, root, modulus, intdiv, percentage, absdiff", "info")
                     _print("  history  - Show calculation history", "info")
@@ -47,16 +53,18 @@ def calculator_repl() -> None:
                     _print("  exit     - Exit the calculator", "info")
                     continue
 
-                if command == 'exit':
+                # ---- Exit and save ----
+                if command == "exit":
                     try:
                         calc.save_history()
                         _print("History saved successfully.", "ok")
                     except Exception as e:
                         _print(f"Warning: Could not save history: {e}", "warn")
                     _print("Goodbye!", "heading")
-                    return  # <-- do not raise; wrapper handles SystemExit
+                    return  # exit gracefully
 
-                if command == 'history':
+                # ---- History management ----
+                if command == "history":
                     history = calc.show_history()
                     if not history:
                         _print("No calculations in history", "info")
@@ -66,26 +74,26 @@ def calculator_repl() -> None:
                             _print(f"{i}. {entry}", "info")
                     continue
 
-                if command == 'clear':
+                if command == "clear":
                     calc.clear_history()
                     _print("History cleared", "ok")
                     continue
 
-                if command == 'undo':
+                if command == "undo":
                     if calc.undo():
                         _print("Operation undone", "ok")
                     else:
                         _print("Nothing to undo", "warn")
                     continue
 
-                if command == 'redo':
+                if command == "redo":
                     if calc.redo():
                         _print("Operation redone", "ok")
                     else:
                         _print("Nothing to redo", "warn")
                     continue
 
-                if command == 'save':
+                if command == "save":
                     try:
                         calc.save_history()
                         _print("History saved successfully", "ok")
@@ -93,7 +101,7 @@ def calculator_repl() -> None:
                         _print(f"Error saving history: {e}", "error")
                     continue
 
-                if command == 'load':
+                if command == "load":
                     try:
                         calc.load_history()
                         _print("History loaded successfully", "ok")
@@ -101,27 +109,29 @@ def calculator_repl() -> None:
                         _print(f"Error loading history: {e}", "error")
                     continue
 
-                if command in ['add', 'subtract', 'multiply', 'divide', 'power', 'root',
-                               'modulus', 'intdiv', 'percentage', 'absdiff']:
+                # ---- Arithmetic operations ----
+                if command in [
+                    "add", "subtract", "multiply", "divide",
+                    "power", "root", "modulus", "intdiv",
+                    "percentage", "absdiff"
+                ]:
                     try:
                         _print("\nEnter numbers (or 'cancel' to abort):", "info")
                         a = input(prompt_text("First number: "))
-                        if a.lower() == 'cancel':
+                        if a.lower() == "cancel":
                             _print("Operation cancelled", "warn")
                             continue
                         b = input(prompt_text("Second number: "))
-                        if b.lower() == 'cancel':
+                        if b.lower() == "cancel":
                             _print("Operation cancelled", "warn")
                             continue
 
                         operation = OperationFactory.create_operation(command)
                         calc.set_operation(operation)
-
                         result = calc.perform_operation(a, b)
 
-                        # Display formatting
                         result_disp = result.normalize() if isinstance(result, Decimal) else result
-                        if str(operation) == 'Percentage':
+                        if str(operation) == "Percentage":
                             result_disp = f"{result_disp}%"
 
                         _print(f"\nResult: {result_disp}", "ok")
@@ -131,8 +141,10 @@ def calculator_repl() -> None:
                         _print(f"Unexpected error: {e}", "error")
                     continue
 
+                # ---- Unknown command ----
                 _print(f"Unknown command: '{command}'. Type 'help' for available commands.", "warn")
 
+            # ---- Interrupts / termination ----
             except KeyboardInterrupt:
                 _print("Operation cancelled", "warn")
                 continue

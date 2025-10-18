@@ -1,9 +1,8 @@
-# app/calculation.py
-"""
-Author: Leo Tso
-Class: IS601
-Date: 2025-10-12
-"""
+# Author: Leo Tso
+# Date: 2025-10-18
+# Class: IS601
+# File: app/calculation.py
+# Notes: Arithmetic core with safe error mapping and (de)serialization helpers.
 
 from dataclasses import dataclass, field
 import datetime
@@ -23,9 +22,10 @@ class Calculation:
     timestamp: datetime.datetime = field(default_factory=datetime.datetime.now)
 
     def __post_init__(self):
+        # Compute once on construction
         self.result = self.calculate()
 
-    # ---------- operation implementations ----------
+    # ---------- error helpers ----------
 
     @staticmethod
     def _raise_div_zero() -> None:
@@ -37,12 +37,14 @@ class Calculation:
 
     @staticmethod
     def _raise_invalid_root(x: Decimal, y: Decimal) -> None:
-        # Tests call this attribute by name — keep it available.
+        # Keep explicit for test coverage
         if y == 0:
             raise OperationError("Zero root is undefined")
         if x < 0:
             raise OperationError("Cannot calculate root of negative number")
         raise OperationError("Invalid root operation")
+
+    # ---------- operation primitives ----------
 
     @classmethod
     def _div(cls, x: Decimal, y: Decimal) -> Decimal:
@@ -54,7 +56,7 @@ class Calculation:
     def _pow(cls, x: Decimal, y: Decimal) -> Decimal:
         if y < 0:
             cls._raise_neg_power()
-        # Use float pow for non-integer exponents and convert back to Decimal.
+        # Use float pow for non-integer exponents; convert back to Decimal
         return Decimal(pow(float(x), float(y)))
 
     @classmethod
@@ -65,15 +67,14 @@ class Calculation:
 
     @classmethod
     def _int_div(cls, x: Decimal, y: Decimal) -> Decimal:
-        """Floor division (quotient only), consistent with Python's // for negatives."""
+        """Floor-division semantics (matches Python // for negatives)."""
         if y == 0:
             cls._raise_div_zero()
-        q = (x / y).to_integral_value(rounding=ROUND_FLOOR)
-        return q
+        return (x / y).to_integral_value(rounding=ROUND_FLOOR)
 
     @classmethod
     def _mod(cls, x: Decimal, y: Decimal) -> Decimal:
-        """Remainder consistent with Python/Decimal semantics: a - b * floor(a/b)."""
+        """Remainder: a - b * floor(a/b)."""
         if y == 0:
             cls._raise_div_zero()
         q = (x / y).to_integral_value(rounding=ROUND_FLOOR)
@@ -81,19 +82,20 @@ class Calculation:
 
     @classmethod
     def _percentage(cls, x: Decimal, y: Decimal) -> Decimal:
-        """(x / y) * 100 with divide-by-zero protection."""
+        """Compute (x / y) * 100 with zero check."""
         if y == 0:
             cls._raise_div_zero()
         return (x / y) * Decimal(100)
 
     @staticmethod
     def _absdiff(x: Decimal, y: Decimal) -> Decimal:
+        """|x - y|"""
         return (x - y).copy_abs()
 
-    # ---------- main calculation dispatcher ----------
+    # ---------- dispatcher ----------
 
     def calculate(self) -> Decimal:
-        operations = {
+        ops = {
             "Addition":            lambda x, y: x + y,
             "Subtraction":         lambda x, y: x - y,
             "Multiplication":      lambda x, y: x * y,
@@ -105,18 +107,19 @@ class Calculation:
             "Percentage":          lambda x, y: self._percentage(x, y),
             "AbsoluteDifference":  lambda x, y: self._absdiff(x, y),
         }
-        op = operations.get(self.operation)
-        if not op:
+        fn = ops.get(self.operation)
+        if not fn:
             raise OperationError(f"Unknown operation: {self.operation}")
         try:
-            return op(self.operand1, self.operand2)
+            return fn(self.operand1, self.operand2)
         except (InvalidOperation, ValueError, ArithmeticError) as e:
-            # Normalize any math/domain errors into OperationError
+            # Normalize upstream math/runtime errors
             raise OperationError(f"Calculation failed: {str(e)}")
 
     # ---------- (de)serialization ----------
 
     def to_dict(self) -> Dict[str, Any]:
+        # Serialize to string-safe forms
         return {
             "operation": self.operation,
             "operand1": str(self.operand1),
@@ -127,6 +130,7 @@ class Calculation:
 
     @staticmethod
     def from_dict(data: Dict[str, Any]) -> "Calculation":
+        # Strict load with warning on result mismatch
         try:
             calc = Calculation(
                 operation=data["operation"],
@@ -134,11 +138,10 @@ class Calculation:
                 operand2=Decimal(data["operand2"]),
             )
             calc.timestamp = datetime.datetime.fromisoformat(data["timestamp"])
-            saved_result = Decimal(data["result"])
-            if calc.result != saved_result:
+            saved = Decimal(data["result"])
+            if calc.result != saved:
                 logging.warning(
-                    f"Loaded calculation result {saved_result} "
-                    f"differs from computed result {calc.result}"
+                    f"Loaded calculation result {saved} differs from computed result {calc.result}"
                 )
             return calc
         except (KeyError, InvalidOperation, ValueError) as e:
@@ -147,9 +150,11 @@ class Calculation:
     # ---------- repr / comparisons / formatting ----------
 
     def __str__(self) -> str:
+        # Human-readable summary
         return f"{self.operation}({self.operand1}, {self.operand2}) = {self.result}"
 
     def __repr__(self) -> str:
+        # Debug-focused form
         return (
             "Calculation("
             f"operation='{self.operation}', "
@@ -160,6 +165,7 @@ class Calculation:
         )
 
     def __eq__(self, other: object) -> bool:
+        # Return NotImplemented to allow symmetric fallback
         if not isinstance(other, Calculation):
             return NotImplemented
         return (
@@ -170,9 +176,9 @@ class Calculation:
         )
 
     def format_result(self, precision: int = 10) -> str:
+        """Format with fixed precision; fall back on InvalidOperation (e.g., NaN)."""
         try:
             q = Decimal("0." + "0" * precision)
             return str(self.result.normalize().quantize(q).normalize())
         except InvalidOperation:
-            # Fallback: return raw string if quantize fails
             return str(self.result)

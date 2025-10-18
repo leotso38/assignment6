@@ -1,8 +1,8 @@
-"""
-Author: Leo Tso
-Class: IS601
-Date: 2025-10-12
-"""
+# Author: Leo Tso
+# Date: 2025-10-18
+# Class: IS601
+# File: app/calculator_config.py
+# Notes: Central configuration loader for calculator behavior and paths.
 
 from dataclasses import dataclass
 from decimal import Decimal
@@ -12,15 +12,18 @@ import os
 from typing import Optional
 
 from dotenv import load_dotenv
-
 from app.exceptions import ConfigurationError
 
 
+# ---------- Utility Helpers ----------
+
 def get_project_root() -> Path:
+    """Return project root folder path."""
     return Path(__file__).parent.parent.resolve()
 
 
 def _resolve_env_path(var_name: str, default: Path) -> Path:
+    """Resolve path from env var or return default if not set."""
     raw = os.getenv(var_name)
     if not raw:
         return default.resolve()
@@ -30,15 +33,15 @@ def _resolve_env_path(var_name: str, default: Path) -> Path:
     return p
 
 
-# Load .env from project root (does not override real env)
+# Load .env once at import time; do not override system env.
 load_dotenv(dotenv_path=get_project_root() / ".env", override=False)
 
 
 @dataclass
 class CalculatorConfig:
     """
-    Configuration for the calculator.
-    Priority: constructor args > environment/.env > defaults
+    Calculator configuration object.
+    Priority: constructor args > environment > defaults
     """
 
     def __init__(
@@ -52,7 +55,7 @@ class CalculatorConfig:
     ):
         project_root = get_project_root()
 
-        # ---- Base dir (fallback for logs/history when specific envs are missing)
+        # ---- Base directory fallback ----
         env_base = os.getenv("CALCULATOR_BASE_DIR")
         if base_dir is not None:
             self.base_dir = Path(base_dir).resolve()
@@ -61,15 +64,15 @@ class CalculatorConfig:
         else:
             self.base_dir = project_root
 
-        # ---- History Settings
-        # CALCULATOR_MAX_HISTORY_SIZE (default 1000)
+        # ---- History settings ----
+        # Max stored entries (default 1000)
         self.max_history_size = (
             int(os.getenv("CALCULATOR_MAX_HISTORY_SIZE", "1000"))
             if max_history_size is None
             else int(max_history_size)
         )
 
-        # CALCULATOR_AUTO_SAVE (default true)
+        # Auto-save (default true)
         auto_save_env = os.getenv("CALCULATOR_AUTO_SAVE", "true").strip().lower()
         self.auto_save = (
             (auto_save_env in {"true", "1", "yes", "y"})
@@ -77,44 +80,44 @@ class CalculatorConfig:
             else bool(auto_save)
         )
 
-        # ---- Calculation Settings
-        # CALCULATOR_PRECISION (default 10)
+        # ---- Calculation precision ----
         self.precision = (
             int(os.getenv("CALCULATOR_PRECISION", "10"))
             if precision is None
             else int(precision)
         )
 
-        # CALCULATOR_MAX_INPUT_VALUE (default 1e999)
+        # ---- Maximum input limit ----
         self.max_input_value = (
             Decimal(os.getenv("CALCULATOR_MAX_INPUT_VALUE", "1e999"))
             if max_input_value is None
             else Decimal(max_input_value)
         )
 
-        # CALCULATOR_DEFAULT_ENCODING (default utf-8)
+        # ---- Encoding ----
         self.default_encoding = (
             os.getenv("CALCULATOR_DEFAULT_ENCODING", "utf-8")
             if default_encoding is None
             else default_encoding
         )
 
-    # ---- Derived Paths (Log & History) ----
+    # ---------- Derived Paths ----------
+
     @property
     def log_dir(self) -> Path:
-        # CALCULATOR_LOG_DIR (default <base_dir>/logs)
+        """Directory where logs are stored."""
         fallback = (self.base_dir / "logs").resolve()
         return _resolve_env_path("CALCULATOR_LOG_DIR", fallback)
 
     @property
     def history_dir(self) -> Path:
-        # CALCULATOR_HISTORY_DIR (default <base_dir>/history)
+        """Directory where history CSVs are stored."""
         fallback = (self.base_dir / "history").resolve()
         return _resolve_env_path("CALCULATOR_HISTORY_DIR", fallback)
 
     @property
     def history_file(self) -> Path:
-        # optional override CALCULATOR_HISTORY_FILE
+        """Full path to the calculator history file."""
         env_value = os.getenv("CALCULATOR_HISTORY_FILE")
         if env_value:
             return _resolve_env_path("CALCULATOR_HISTORY_FILE", self.history_dir / "calculator_history.csv")
@@ -122,14 +125,16 @@ class CalculatorConfig:
 
     @property
     def log_file(self) -> Path:
-        # optional override CALCULATOR_LOG_FILE
+        """Full path to the calculator log file."""
         env_value = os.getenv("CALCULATOR_LOG_FILE")
         if env_value:
             return _resolve_env_path("CALCULATOR_LOG_FILE", self.log_dir / "calculator.log")
         return (self.log_dir / "calculator.log").resolve()
 
-    # ---- Validation ----
+    # ---------- Validation ----------
+
     def validate(self) -> None:
+        """Ensure configuration parameters are within valid ranges."""
         if self.max_history_size <= 0:
             raise ConfigurationError("max_history_size must be positive")
         if self.precision <= 0:

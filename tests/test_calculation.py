@@ -1,4 +1,8 @@
-# tests/test_calculation_consolidated.py
+# Author: Leo Tso
+# Date: 2025-10-18
+# Class: IS601
+# File: tests/test_calculation.py
+# Purpose: Consolidated unit tests for Calculation ops, errors, logging, and dunder methods.
 
 import logging
 import builtins
@@ -14,6 +18,7 @@ from app.exceptions import OperationError
 # -----------------------------
 
 def test_add_sub_mul_div_power_root_success():
+    """Basic arithmetic, power, and typical roots."""
     assert Calculation("Addition", Decimal("2"), Decimal("3")).result == Decimal("5")
     assert Calculation("Subtraction", Decimal("5"), Decimal("3")).result == Decimal("2")
     assert Calculation("Multiplication", Decimal("2"), Decimal("3")).result == Decimal("6")
@@ -25,7 +30,7 @@ def test_add_sub_mul_div_power_root_success():
 
 
 def test_integer_division_positive_and_negatives():
-    # Floor-division semantics (match Python/Decimal)
+    """Floor-division semantics must match Decimal/Python."""
     assert Calculation("IntegerDivision", Decimal("10"), Decimal("3")).result == Decimal("3")
     assert Calculation("IntegerDivision", Decimal("-10"), Decimal("3")).result == Decimal("-4")
     assert Calculation("IntegerDivision", Decimal("10"), Decimal("-3")).result == Decimal("-4")
@@ -33,6 +38,7 @@ def test_integer_division_positive_and_negatives():
 
 
 def test_modulus_with_negatives_matches_python_decimal():
+    """Modulo sign behavior mirrors Decimal implementation."""
     assert Calculation("Modulus", Decimal("10"), Decimal("3")).result == Decimal("1")
     assert Calculation("Modulus", Decimal("-10"), Decimal("3")).result == Decimal("2")
     assert Calculation("Modulus", Decimal("10"), Decimal("-3")).result == Decimal("-2")
@@ -40,6 +46,7 @@ def test_modulus_with_negatives_matches_python_decimal():
 
 
 def test_percentage_and_absdiff():
+    """Percentage (a% of b) and absolute difference."""
     assert Calculation("Percentage", Decimal("25"), Decimal("100")).result == Decimal("25")
     assert Calculation("AbsoluteDifference", Decimal("7"), Decimal("3")).result == Decimal("4")
     assert Calculation("AbsoluteDifference", Decimal("3"), Decimal("7")).result == Decimal("4")
@@ -50,31 +57,37 @@ def test_percentage_and_absdiff():
 # -----------------------------
 
 def test_division_by_zero_raises():
+    """Division by zero → OperationError."""
     with pytest.raises(OperationError, match="Division by zero is not allowed"):
         Calculation("Division", Decimal("1"), Decimal("0"))
 
 
 def test_percentage_by_zero_raises():
+    """Percentage uses division; zero denominator should error."""
     with pytest.raises(OperationError, match="Division by zero is not allowed"):
         Calculation("Percentage", Decimal("1"), Decimal("0"))
 
 
 def test_integer_division_by_zero_raises():
+    """Integer division by zero must raise."""
     with pytest.raises(OperationError, match="Division by zero is not allowed"):
         Calculation("IntegerDivision", Decimal("1"), Decimal("0"))
 
 
 def test_modulus_by_zero_raises():
+    """Modulo by zero must raise."""
     with pytest.raises(OperationError, match="Division by zero is not allowed"):
         Calculation("Modulus", Decimal("1"), Decimal("0"))
 
 
 def test_negative_exponent_raises():
+    """Negative exponent is disallowed by spec."""
     with pytest.raises(OperationError, match="Negative exponents are not supported"):
         Calculation("Power", Decimal("2"), Decimal("-1"))
 
 
 def test_root_zero_and_negative_base_raise():
+    """Invalid roots: zero-degree; even root of negative base."""
     with pytest.raises(OperationError, match="Zero root is undefined"):
         Calculation("Root", Decimal("9"), Decimal("0"))
     with pytest.raises(OperationError, match="Cannot calculate root of negative number"):
@@ -82,13 +95,13 @@ def test_root_zero_and_negative_base_raise():
 
 
 def test_unknown_operation_raises():
+    """Unsupported operation must raise Unknown operation."""
     with pytest.raises(OperationError, match="Unknown operation"):
         Calculation("Nope", Decimal("1"), Decimal("2"))
 
 
-# This calls the 'generic' else path in _raise_invalid_root directly,
-# which normal inputs can't reach via Root().  (exercises the final branch)
 def test_raise_invalid_root_generic_branch():
+    """Force generic invalid-root branch (unreachable via normal inputs)."""
     with pytest.raises(OperationError, match="Invalid root operation"):
         Calculation._raise_invalid_root(Decimal("1"), Decimal("1"))
 
@@ -98,7 +111,7 @@ def test_raise_invalid_root_generic_branch():
 # -----------------------------
 
 def test_from_dict_mismatch_logs_warning(caplog):
-    # valid data but with a deliberately wrong saved result to trigger the warning
+    """from_dict warns when stored result ≠ computed."""
     data = {
         "operation": "Addition",
         "operand1": "1",
@@ -113,17 +126,19 @@ def test_from_dict_mismatch_logs_warning(caplog):
 
 
 def test_format_result_invalid_operation_fallback():
-    # Force InvalidOperation inside quantize()
+    """Quantize InvalidOperation → return raw string (e.g., NaN)."""
     calc = Calculation("Addition", Decimal("1"), Decimal("1"))
     calc.result = Decimal("NaN")
     assert calc.format_result(precision=5) == "NaN"
 
 
 def test_calculation_wraps_runtime_error(monkeypatch):
-    # Cause pow() to throw to hit the "Calculation failed: ..." wrapper on Power
+    """Runtime error inside pow() should be wrapped with OperationError."""
     original_pow = builtins.pow
+
     def boom(*args, **kwargs):
         raise ValueError("boom")
+
     monkeypatch.setattr(builtins, "pow", boom)
     try:
         with pytest.raises(OperationError, match="Calculation failed: boom"):
@@ -137,11 +152,11 @@ def test_calculation_wraps_runtime_error(monkeypatch):
 # -----------------------------
 
 def test_repr_and_str_and_eq_notimplemented():
+    """String forms contain details; eq vs non-Calculation returns NotImplemented."""
     c = Calculation("Addition", Decimal("2"), Decimal("3"))
     s = str(c)
     r = repr(c)
     assert "Addition" in s and "= 5" in s
     assert "Calculation(" in r and "operation='Addition'" in r
-    # when comparing against a non-Calculation object, Python's datamodel
-    # best-practice is to return NotImplemented so the other side can try.
+    # For non-Calculation comparisons, return NotImplemented (Python data model best practice).
     assert (c.__eq__(123) is NotImplemented)
