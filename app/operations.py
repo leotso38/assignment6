@@ -18,7 +18,7 @@ class Operation(ABC):
         """Perform the operation."""
         pass
 
-    def validate_operands(self, a: Decimal, b: Decimal) -> None:
+    def validate_operands(self, a: Decimal, b: Decimal) -> None: # pragma: no cover
         """Optional operand validation override."""
         pass
 

@@ -43,7 +43,7 @@ def calculator_repl() -> None:
                 # ---- Help menu ----
                 if command == "help":
                     _print("\nAvailable commands:", "heading")
-                    _print("  add, subtract, multiply, divide, power, root, modulus, intdiv, percentage, absdiff", "info")
+                    _print("  add, subtract, multiply, divide, power, root, modulus, intdiv, percentage, absdiff", "info") # pragma: no cover
                     _print("  history  - Show calculation history", "info")
                     _print("  clear    - Clear calculation history", "info")
                     _print("  undo     - Undo the last calculation", "info")

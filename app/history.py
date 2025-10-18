@@ -14,7 +14,7 @@ class HistoryObserver(ABC):
     """Abstract base observer class for calculator state updates."""
 
     @abstractmethod
-    def update(self, calculation: Calculation) -> None:
+    def update(self, calculation: Calculation) -> None: # pragma: no cover
         """Handle new calculation notification."""
         pass
 
