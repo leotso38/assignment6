@@ -20,13 +20,16 @@ def _run_repl_with_inputs(inputs):
 
 @patch.object(builtins, "print")
 def test_repl_help_unknown_history_exit(mock_print):
-    # help -> unknown -> history (empty) -> exit
-    _run_repl_with_inputs(["help", "wat", "history", "exit"])
+    # Force an empty history so the output is deterministic
+    with patch("app.calculator.Calculator.show_history", return_value=[]):
+        _run_repl_with_inputs(["help", "wat", "history", "exit"])
+
     mock_print.assert_any_call("\nAvailable commands:")
     mock_print.assert_any_call("Unknown command: 'wat'. Type 'help' for available commands.")
     mock_print.assert_any_call("No calculations in history")
     mock_print.assert_any_call("History saved successfully.")
     mock_print.assert_any_call("Goodbye!")
+
 
 
 @patch.object(builtins, "print")
