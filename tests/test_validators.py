@@ -1,7 +1,7 @@
 # Author: Leo Tso
 # Date: 2025-10-18
 # Class: IS601
-# File: tests/test_input_validators.py
+# File: tests/test_validators.py
 # Notes: Validates InputValidator number parsing, normalization, and boundary enforcement.
 
 import pytest

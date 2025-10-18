@@ -1,7 +1,7 @@
 # Author: Leo Tso
 # Date: 2025-10-18
 # Class: IS601
-# File: app/repl.py
+# File: app/calculator_repl.py
 # Notes: Text-based REPL for calculator operations with optional color output and full command handling.
 
 """
