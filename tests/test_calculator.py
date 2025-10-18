@@ -2,7 +2,7 @@
 # Date: 2025-10-18
 # Class: IS601
 # File: tests/test_calculator.py
-# Notes: End-to-end tests for Calculator orchestration, REPL wrapper, observers, history I/O, and undo/redo.
+# Notes: E2E tests for calculator orchestration, REPL wrapper, observers, history I/O, undo/redo.
 
 import datetime
 from pathlib import Path
@@ -25,7 +25,7 @@ from app.operations import OperationFactory, Addition
 # ---------- Shared helpers / fixtures ----------
 
 class _SpyObserver(HistoryObserver):
-    """Minimal observer to capture update() notifications."""
+    """Capture update() notifications."""
     def __init__(self):
         self.seen = []
     def update(self, calculation):
@@ -34,7 +34,7 @@ class _SpyObserver(HistoryObserver):
 
 @pytest.fixture
 def calc_tmp():
-    """Calculator with temp-scoped files (logs/history stay under a temp dir)."""
+    """Calculator with temp-scoped files (logs/history under a temp dir)."""
     with TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)
         cfg = CalculatorConfig(base_dir=temp_path)
@@ -53,7 +53,7 @@ def calc_tmp():
 
 
 def _mk_calc(tmp_path: Path, **overrides) -> Calculator:
-    """Helper: new Calculator rooted at tmp_path with clean history."""
+    """New Calculator rooted at tmp_path with clean history."""
     cfg = CalculatorConfig(
         base_dir=tmp_path,
         max_history_size=overrides.get("max_history_size", 10),
